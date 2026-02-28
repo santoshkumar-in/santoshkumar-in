@@ -50,7 +50,7 @@ export function TopNav({ version, setVersion, C }: TopNavProps) {
         })}
       </div>
       <button onClick={() => setVersion(version === "genai" ? "fullstack" : "genai")} className="thover"
-        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 16px", flexShrink: 0, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, ...mono, fontSize: "11px", cursor: "pointer", background: "transparent", color: C.textMid, border: "none", borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, transition: "all 0.15s", letterSpacing: "0.02em" }}>
+        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "0 16px", flexShrink: 0, borderLeft: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`, ...mono, fontSize: "11px", cursor: "pointer", background: "transparent", color: C.textMid, border: "none", transition: "all 0.15s", letterSpacing: "0.02em" }}>
         <IcoSwap size={14} color={C.textMid} />
         <span className="hidden lg:inline">{version === "genai" ? "Full-Stack" : "Gen AI"}</span>
       </button>
