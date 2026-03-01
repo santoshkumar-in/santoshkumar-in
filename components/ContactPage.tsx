@@ -95,6 +95,7 @@ export function ContactPage({ version, C }: ContactPageProps) {
           name: form.name,
           email: form.email,
           message: form.message,
+          from: version,
           recaptchaToken,
         }),
       });
