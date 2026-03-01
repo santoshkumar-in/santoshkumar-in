@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PortfolioVersion, ColorScheme } from "../types";
 import { mono, sans } from "../lib/config";
 import { useWidth } from "../lib/hooks";
+import { validateContactForm, ValidationError } from "../lib/validation";
 import { IcoMail, IcoBrain, Dot, IcoGithub, IcoLinkedIn, IcoUpwork } from "./Icons";
 
 interface ContactPageProps {
@@ -19,10 +20,33 @@ export function ContactPage({ version, C }: ContactPageProps) {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [focused, setFocused] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   const w = useWidth();
   const isMobile = w < 768;
   const isTablet = w < 1080;
+
+  // Load reCAPTCHA script
+  useEffect(() => {
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (!siteKey) {
+      console.error("NEXT_PUBLIC_RECAPTCHA_SITE_KEY not configured");
+      return;
+    }
+
+    if (typeof window !== "undefined" && !window.grecaptcha) {
+      const script = document.createElement("script");
+      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setRecaptchaLoaded(true);
+      document.head.appendChild(script);
+    } else if (window.grecaptcha) {
+      setRecaptchaLoaded(true);
+    }
+  }, []);
 
   const valid = {
     name: form.name.trim().length >= 2,
@@ -31,16 +55,86 @@ export function ContactPage({ version, C }: ContactPageProps) {
   };
   const allValid = valid.name && valid.email && valid.message;
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setTouched({ name: true, email: true, message: true });
-    if (!allValid || status !== "idle") return;
+    setFieldErrors({});
+    setErrorMessage("");
+
+    if (!allValid || status === "sending") return;
+
+    // Client-side validation
+    const validation = validateContactForm(form);
+    if (!validation.isValid) {
+      const errors: Record<string, string> = {};
+      validation.errors.forEach((err: ValidationError) => {
+        errors[err.field] = err.message;
+      });
+      setFieldErrors(errors);
+      return;
+    }
+
     setStatus("sending");
-    setTimeout(() => setStatus("sent"), 1400);
+
+    try {
+      // Get reCAPTCHA token
+      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+      if (!siteKey) {
+        throw new Error("reCAPTCHA is not configured");
+      }
+
+      let recaptchaToken = "";
+      if (window.grecaptcha) {
+        recaptchaToken = await window.grecaptcha.execute(siteKey, { action: "contact" });
+      }
+
+      // Send to API
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          message: form.message,
+          recaptchaToken,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          // Field-level errors
+          const errors: Record<string, string> = {};
+          data.errors.forEach((err: ValidationError) => {
+            errors[err.field] = err.message;
+          });
+          setFieldErrors(errors);
+          setStatus("idle");
+        } else {
+          // General error
+          throw new Error(data.error || "Failed to send message");
+        }
+        return;
+      }
+
+      setStatus("sent");
+      setTimeout(() => {
+        setForm({ name: "", email: "", message: "" });
+        setTouched({});
+        setStatus("idle");
+      }, 5000);
+    } catch (error: any) {
+      console.error("Contact form error:", error);
+      setErrorMessage(error.message || "An error occurred. Please try again.");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 5000);
+    }
   }
 
   function fieldStyle(f: string) {
     let border = `1px solid ${C.border}`;
     if (focused === f) border = `1px solid ${C.accent}`;
+    else if (fieldErrors[f]) border = `1px solid ${C.red}`;
     else if (touched[f] && !valid[f as keyof typeof valid]) border = `1px solid ${C.red}`;
     else if (touched[f] && valid[f as keyof typeof valid]) border = `1px solid ${C.green}`;
     return {
@@ -135,23 +229,21 @@ export function ContactPage({ version, C }: ContactPageProps) {
           ? "// Freelance AI projects · Gen AI consulting · Senior roles"
           : "// Freelance contracts, consulting, or senior engineering roles."}
       </p>
+
       {status === "sent" ? (
         <div style={{ background: C.accentDim, border: `1px solid ${C.accent}40`, borderRadius: "8px", padding: "28px", textAlign: "center" }}>
           <div style={{ fontSize: "24px", marginBottom: "8px" }}>✓</div>
           <div style={{ ...sans, fontSize: "16px", fontWeight: 500, color: C.textBright, marginBottom: "4px" }}>Message sent!</div>
-          <div style={{ ...mono, fontSize: "12px", color: C.textMid, marginBottom: "16px" }}>I'll respond within 24–48 hours.</div>
-          <button
-            onClick={() => {
-              setForm({ name: "", email: "", message: "" });
-              setTouched({});
-              setStatus("idle");
-            }}
-            className="cursor"
-            style={{ ...mono, fontSize: "12px", color: C.accent, background: "none", border: `1px solid ${C.borderMd}`, borderRadius: "5px", padding: "7px 16px", cursor: "pointer" }}>
-            Send another
-          </button>
+          <div style={{ ...mono, fontSize: "12px", color: C.textMid }}>I'll respond within 24–48 hours.</div>
         </div>
-      ) : (
+      ) : status === "error" ? (
+        <div style={{ background: C.red + "15", border: `1px solid ${C.red}40`, borderRadius: "8px", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ ...sans, fontSize: "14px", color: C.red, marginBottom: "8px", fontWeight: 500 }}>Error</div>
+          <div style={{ ...mono, fontSize: "12px", color: C.text }}>{errorMessage}</div>
+        </div>
+      ) : null}
+
+      {status !== "sent" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
           {[
             { key: "name", type: "text", label: "Name", ph: "Your name" },
@@ -160,8 +252,14 @@ export function ContactPage({ version, C }: ContactPageProps) {
             <div key={f.key}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                 <label style={{ ...mono, fontSize: "12px", color: C.textMid }}>{f.label}</label>
-                {touched[f.key] && !valid[f.key as keyof typeof valid] && <span style={{ ...mono, fontSize: "10px", color: C.red }}>Required</span>}
-                {touched[f.key] && valid[f.key as keyof typeof valid] && <span style={{ ...mono, fontSize: "10px", color: C.green }}>✓</span>}
+                {(fieldErrors[f.key] || (touched[f.key] && !valid[f.key as keyof typeof valid])) && (
+                  <span style={{ ...mono, fontSize: "10px", color: C.red }}>
+                    {fieldErrors[f.key] || "Required"}
+                  </span>
+                )}
+                {touched[f.key] && valid[f.key as keyof typeof valid] && !fieldErrors[f.key] && (
+                  <span style={{ ...mono, fontSize: "10px", color: C.green }}>✓</span>
+                )}
               </div>
               <input
                 type={f.type}
@@ -170,6 +268,9 @@ export function ContactPage({ version, C }: ContactPageProps) {
                 onChange={e => {
                   const v = e.target.value;
                   setForm(p => ({ ...p, [f.key]: v }));
+                  if (fieldErrors[f.key]) {
+                    setFieldErrors(prev => ({ ...prev, [f.key]: "" }));
+                  }
                 }}
                 onFocus={() => setFocused(f.key)}
                 onBlur={() => {
@@ -177,14 +278,21 @@ export function ContactPage({ version, C }: ContactPageProps) {
                   setTouched(t => ({ ...t, [f.key]: true }));
                 }}
                 style={fieldStyle(f.key)}
+                disabled={status === "sending"}
               />
             </div>
           ))}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
               <label style={{ ...mono, fontSize: "12px", color: C.textMid }}>Message</label>
-              {touched.message && !valid.message && <span style={{ ...mono, fontSize: "10px", color: C.red }}>Min 10 chars</span>}
-              {touched.message && valid.message && <span style={{ ...mono, fontSize: "10px", color: C.green }}>✓</span>}
+              {(fieldErrors.message || (touched.message && !valid.message)) && (
+                <span style={{ ...mono, fontSize: "10px", color: C.red }}>
+                  {fieldErrors.message || "Min 10 chars"}
+                </span>
+              )}
+              {touched.message && valid.message && !fieldErrors.message && (
+                <span style={{ ...mono, fontSize: "10px", color: C.green }}>✓</span>
+              )}
             </div>
             <textarea
               rows={5}
@@ -193,6 +301,9 @@ export function ContactPage({ version, C }: ContactPageProps) {
               onChange={e => {
                 const v = e.target.value;
                 setForm(p => ({ ...p, message: v }));
+                if (fieldErrors.message) {
+                  setFieldErrors(prev => ({ ...prev, message: "" }));
+                }
               }}
               onFocus={() => setFocused("message")}
               onBlur={() => {
@@ -200,14 +311,30 @@ export function ContactPage({ version, C }: ContactPageProps) {
                 setTouched(t => ({ ...t, message: true }));
               }}
               style={fieldStyle("message")}
+              disabled={status === "sending"}
             />
           </div>
+
+          {recaptchaLoaded && (
+            <div style={{ ...mono, fontSize: "10px", color: C.textDim, marginTop: "-8px" }}>
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" style={{ color: C.accent }}>
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" style={{ color: C.accent }}>
+                Terms of Service
+              </a>{" "}
+              apply.
+            </div>
+          )}
+
           <button
             onClick={handleSubmit}
-            disabled={status === "sending"}
-            className={allValid ? "cursor" : ""}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "11px", borderRadius: "6px", cursor: allValid ? "pointer" : "default", background: allValid ? C.accent : C.elevated, color: allValid ? C.bg : C.textDim, border: `1px solid ${allValid ? C.accent : C.border}`, ...mono, fontSize: "13px", fontWeight: 500, opacity: status === "sending" ? 0.6 : 1, transition: "all 0.15s" }}>
-            <IcoMail size={15} color={allValid ? C.bg : C.textDim} />
+            disabled={status === "sending" || !recaptchaLoaded}
+            className={allValid && recaptchaLoaded ? "cursor" : ""}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "11px", borderRadius: "6px", cursor: allValid && recaptchaLoaded ? "pointer" : "default", background: allValid && recaptchaLoaded ? C.accent : C.elevated, color: allValid && recaptchaLoaded ? C.bg : C.textDim, border: `1px solid ${allValid && recaptchaLoaded ? C.accent : C.border}`, ...mono, fontSize: "13px", fontWeight: 500, opacity: status === "sending" ? 0.6 : 1, transition: "all 0.15s" }}>
+            <IcoMail size={15} color={allValid && recaptchaLoaded ? C.bg : C.textDim} />
             {status === "sending" ? "Sending..." : "Send message"}
           </button>
         </div>
@@ -256,4 +383,11 @@ export function ContactPage({ version, C }: ContactPageProps) {
       )}
     </div>
   );
+}
+
+// Extend Window interface for TypeScript
+declare global {
+  interface Window {
+    grecaptcha: any;
+  }
 }
