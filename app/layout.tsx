@@ -1,9 +1,11 @@
 "use client";
 import React from "react";
 import { VersionProvider, useVersion } from "../lib/VersionContext";
-import { getColors, GLOBAL_STYLES } from "../lib/config";
+import { getColors, GLOBAL_STYLES, VERSION_CONFIG } from "../lib/config";
 import { useWidth } from "../lib/hooks";
 import { TopNav, MobileTabBar, BottomBar } from "../components/Navigation";
+import { CookieConsent } from '../components/CookieConsent'
+import { GoogleTagManager, GoogleTagManagerNoScript } from "../components/GoogleTagManager";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { version, setVersion } = useVersion();
@@ -26,7 +28,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
+function CookieConsentContent() {
+  const { version } = useVersion();
+  const accent = VERSION_CONFIG[version].accent;
+  return <CookieConsent accent={accent} />
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || "";
   return (
     <html lang="en">
       <head>
@@ -35,8 +44,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="description" content="Gen AI Engineer & Full-Stack Developer" />
       </head>
       <body>
+        <GoogleTagManagerNoScript gtmId={gtmId} />
+        <GoogleTagManager gtmId={gtmId} />
         <VersionProvider>
           <LayoutContent>{children}</LayoutContent>
+          <CookieConsentContent />
         </VersionProvider>
       </body>
     </html>

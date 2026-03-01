@@ -117,6 +117,15 @@ export function ContactPage({ version, C }: ContactPageProps) {
         return;
       }
 
+      // Push event to GTM
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'contact_form_submit',
+        form_name: 'contact',
+        form_location: '/contact',
+        user_version: version, // 'genai' or 'fullstack'
+      });
+
       setStatus("sent");
       setTimeout(() => {
         setForm({ name: "", email: "", message: "" });

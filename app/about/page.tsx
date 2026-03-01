@@ -9,10 +9,18 @@ export default function About() {
   const { version } = useVersion();
   const C = getColors(version);
   useEffect(() => {
-      const accent = VERSION_CONFIG[version].accent;
-      const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-      if (link) link.href = generateFaviconHref(accent);
-    }, [version]);
+    const accent = VERSION_CONFIG[version].accent;
+    const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+    if (link) link.href = generateFaviconHref(accent);
+  }, [version]);
 
+  useEffect(() => {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'page_view',
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
+  }, []);
   return <AboutPage version={version} C={C} />;
 }

@@ -17,5 +17,13 @@ export default function Home() {
     if (link) link.href = generateFaviconHref(accent);
   }, [version]);
 
+  useEffect(() => {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'page_view',
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
+  }, []);
   return <HelloPage onContactClick={() => router.push("/contact")} version={version} C={C} />;
 }
