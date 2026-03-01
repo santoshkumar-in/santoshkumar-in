@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     };
 
     if (!smtpConfig.host || !smtpConfig.user || !smtpConfig.password) {
-      console.error("SMTP configuration is incomplete", smtpConfig, process.env);
+      console.error("SMTP configuration is incomplete");
       return NextResponse.json(
         { success: false, error: "Email service is not configured. Please contact the administrator." },
         { status: 500 }
