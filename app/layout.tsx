@@ -12,7 +12,7 @@ import { getPersonJsonLd } from "@/lib/metadata";
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { version, setVersion } = useVersion();
   const w = useWidth();
-  const isMobile = w < 768;
+  const isMobile = w !== null && w < 768;
   const C = getColors(version);
 
   return (

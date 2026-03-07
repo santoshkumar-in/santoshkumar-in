@@ -25,8 +25,8 @@ export function ContactPage({ version, C }: ContactPageProps) {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
   const w = useWidth();
-  const isMobile = w < 768;
-  const isTablet = w < 1080;
+  const isMobile = w !== null && w < 768;
+  const isTablet = w !== null && w < 1080;
 
   // Load reCAPTCHA script
   useEffect(() => {
