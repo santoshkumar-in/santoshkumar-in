@@ -77,7 +77,7 @@ const MERGED_KEYWORDS = [
 
 // ─── OG image — use a single image that works for both versions ───────────────
 // Design tip: dark card with "Full-Stack · Gen AI" subtitle covers both.
-const OG_IMAGE = `${BASE_URL}/santosh-kumar.webp`;
+const OG_IMAGE = `${BASE_URL}/cover.png`;
 
 // ─── Root / shared metadata ───────────────────────────────────────────────────
 // Used by app/layout.tsx — applies to every route unless overridden.
