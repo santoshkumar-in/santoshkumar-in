@@ -11,7 +11,7 @@ interface ProjectsPageProps {
 
 export function ProjectsPage({ version, C }: ProjectsPageProps) {
   const w = useWidth();
-  const isMobile = w < 768;
+  const isMobile = w !== null && w < 768;
 
   const projectsData = version === "genai" ? [
     // {

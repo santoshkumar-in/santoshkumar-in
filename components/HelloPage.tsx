@@ -19,8 +19,8 @@ const SOCIALS = [
 
 export function HelloPage({ onContactClick, version, C }: HelloPageProps) {
   const w = useWidth();
-  const isMobile = w < 768;
-  const isNarrow = w < 1100;
+  const isMobile = w !== null && w < 768;
+  const isNarrow = w !== null && w < 1100;
   const containerRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const config = VERSION_CONFIG[version];

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { ColorScheme } from "@/types";
 import { mono, sans } from "@/lib/config";
 import { Dot } from "./Icons";
@@ -155,7 +155,6 @@ export function TerminalPanel({ C }: TerminalPanelProps) {
 
   const dim    = C.textDim;
   const mid    = C.textMid;
-  const bright = C.textBright;
 
   // ── Tab: terminal ──────────────────────────────────────────────────────────
   // Reads like a genuine senior dev session:

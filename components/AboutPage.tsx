@@ -12,8 +12,8 @@ interface AboutPageProps {
 export function AboutPage({ version, C }: AboutPageProps) {
   const [section, setSection] = useState("bio");
   const w = useWidth();
-  const isMobile = w < 768;
-  const isTablet = w < 1080;
+  const isMobile = w !== null && w < 768;
+  const isTablet = w !== null && w < 1080;
 
   function kw(s: string) { return <span style={{ color: C.synKeyword }}>{s}</span>; }
   function fn(s: string) { return <span style={{ color: C.synFunc }}>{s}</span>; }

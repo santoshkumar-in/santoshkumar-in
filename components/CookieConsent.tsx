@@ -8,7 +8,6 @@ interface CookieConsentProps {
 export function CookieConsent({ accent = "#a78bfa" }: CookieConsentProps) {
     const [show, setShow] = useState(false);
     const [visible, setVisible] = useState(false);
-    const [btnColor, setBtnColor] = useState('');
 
     useEffect(() => {
         const consent = localStorage.getItem("cookie-consent");
