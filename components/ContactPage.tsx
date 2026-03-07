@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { PortfolioVersion, ColorScheme } from "@/types";
 import { mono, sans } from "@/lib/config";
 import { useWidth } from "@/lib/hooks";
 import { validateContactForm, ValidationError } from "@/lib/validation";
+import { trackEvent } from "@/lib/analytics";
 import { IcoMail, IcoBrain, Dot, IcoGithub, IcoLinkedIn, IcoUpwork } from "./Icons";
 
 interface ContactPageProps {
@@ -127,13 +128,11 @@ export function ContactPage({ version, C }: ContactPageProps) {
         return;
       }
 
-      // Push event to GTM
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: 'contact_form_submit',
+      //Track event      
+      trackEvent("contact_form_submit",  {
         form_name: 'contact',
         form_location: '/contact',
-        user_version: version, // 'genai' or 'fullstack'
+        version, // 'genai' or 'fullstack'
       });
 
       setStatus("sent");

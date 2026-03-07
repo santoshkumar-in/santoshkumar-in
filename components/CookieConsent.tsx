@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 interface CookieConsentProps {
     accent: string;
@@ -21,11 +22,11 @@ export function CookieConsent({ accent = "#a78bfa" }: CookieConsentProps) {
         localStorage.setItem("cookie-consent", "accepted");
         setVisible(false);
         setTimeout(() => setShow(false), 300);
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ event: "cookie_consent_granted" });
+        trackEvent("cookie_consent_granted", {});
     }
 
     function decline() {
+        trackEvent("cookie_consent_declined", {});
         localStorage.setItem("cookie-consent", "declined");
         setVisible(false);
         setTimeout(() => setShow(false), 300);

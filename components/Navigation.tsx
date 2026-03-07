@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PortfolioVersion, ColorScheme } from "@/types";
 import { VERSION_CONFIG, SOCIALS, mono } from "@/lib/config";
+import { trackEvent } from "@/lib/analytics";
 import { BrandLogo } from "./BrandLogo";
 import { IcoFile, IcoMail, IcoSwap, IcoHome, IcoUser, IcoBriefcase, IcoGithub, IcoLinkedIn, IcoUpwork } from "./Icons";
 
@@ -31,13 +32,7 @@ export function TopNav({ version, setVersion, C }: TopNavProps) {
   const versionChange = () => {
     const newVersion = version === "genai" ? "fullstack" : "genai";
     // Track version switch
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: 'version_switch',
-      from_version: version,
-      to_version: newVersion,
-    });
-
+    trackEvent("version_switch", { from_version: version, to_version: newVersion });
     setVersion(newVersion);
   }
 
@@ -100,13 +95,7 @@ export function MobileTabBar({ version, setVersion, C }: MobileTabBarProps) {
   const versionChange = () => {
     const newVersion = version === "genai" ? "fullstack" : "genai";
     // Track version switch
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: 'version_switch',
-      from_version: version,
-      to_version: newVersion,
-    });
-
+    trackEvent("version_switch", { from_version: version, to_version: newVersion });
     setVersion(newVersion);
   }
 

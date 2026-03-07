@@ -52,3 +52,10 @@ export interface Social {
   Icon: any;
   shortLabel: string;
 }
+
+declare global {
+  interface Window {
+    gtag: (...args: any[]) => void;
+    dataLayer: any[];
+  }
+}

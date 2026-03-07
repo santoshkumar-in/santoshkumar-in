@@ -4,6 +4,7 @@ import { AboutPage } from "@/components/AboutPage";
 import { useVersion } from "@/lib/VersionContext";
 import { getColors, VERSION_CONFIG } from "@/lib/config";
 import { generateFaviconHref } from "@/components/BrandLogo";
+import { trackEvent } from "@/lib/analytics";
 
 export default function About() {
   const { version } = useVersion();
@@ -15,12 +16,7 @@ export default function About() {
   }, [version]);
 
   useEffect(() => {
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({
-      event: 'page_view',
-      page_path: window.location.pathname,
-      page_title: document.title,
-    });
+    trackEvent("page_view", { page_path: window.location.pathname, version });
   }, []);
   return <AboutPage version={version} C={C} />;
 }
