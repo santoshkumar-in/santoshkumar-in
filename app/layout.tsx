@@ -6,7 +6,8 @@ import { useWidth } from "@/lib/hooks";
 import { TopNav, MobileTabBar, BottomBar, MobileBottomBar } from "@/components/Navigation";
 import { CookieConsent } from '@/components/CookieConsent'
 import { GoogleTagManager, GoogleTagManagerNoScript } from "@/components/GoogleTagManager";
-import { rootMetadata, getPersonJsonLd } from "@/lib/metadata";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { getPersonJsonLd } from "@/lib/metadata";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const { version, setVersion } = useVersion();
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <GoogleAnalytics measurementId={gtmId} />
         <link rel="icon" type="image/svg+xml" />
         <title>Santosh Kumar - Portfolio</title>
         <meta name="description" content="Gen AI Engineer & Full-Stack Developer" />
